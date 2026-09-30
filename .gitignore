@@ -1,0 +1,10 @@
+# RStudio / R session files
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# Quarto / knitr output
+/.quarto/
+*_cache/
+*_files/
