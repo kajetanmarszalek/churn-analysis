@@ -1,4 +1,4 @@
 # churn-analysis
-Analiza odejść klientów (customer churn) firmy telekomunikacyjnej na podstawie zbioru Telco Customer Churn (IBM) z Kaggle.
+Data analysis of customer churn at a telecom company, based on the Telco Customer Churn (IBM) dataset from Kaggle.
 
 https://www.kaggle.com/datasets/blastchar/telco-customer-churn

@@ -1,0 +1,95 @@
+---
+title: "Churn Data Analysis"
+author: "Kajetan Marszałek"
+format: 
+  html:
+    page-layout: full
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    code-fold: true
+    theme: flatly
+    css: ../resources/styles.css
+    embed-resources: true
+
+execute:
+  echo: false
+---
+
+```{r}
+#| label: setup
+#| output: false
+
+# Data analysis
+library(DataExplorer)
+library(rcompanion)
+library(corrplot)
+
+# Modeling
+library(caret)
+library(cluster)
+library(mclust)
+library(pROC)
+library(car)
+library(ranger)
+library(kernlab)
+
+# Data manipulation and visualization
+library(tidyverse)
+library(scales)
+library(patchwork)
+library(ggrepel)
+library(factoextra)
+library(viridis)
+library(plotly)
+library(purrr)
+library(RColorBrewer)
+library(plot3D)
+library(rpart.plot)
+
+# Tables
+library(knitr)
+library(kableExtra)
+
+# File management
+library(here)
+
+source(here("R", "plots_tables.R"))
+
+source(here("R", "01_import.R"))
+source(here("R", "02_cleaning.R"))
+source(here("R", "03_features.R"))
+```
+
+# Introduction
+
+The raw dataset contains `r nrow(churn_raw)` records and `r ncol(churn_raw)` variables.
+
+# Data Overview
+
+The raw dataset consists of `r nrow(churn_raw)` records and `r ncol(churn_raw)` variables, of which `r sum(sapply(churn_raw, is.numeric))` are quantitative and `r sum(sapply(churn_raw, is.character))` are categorical. Detailed information on the variables and their data types is provided in @tbl-raw-data-types.
+
+```{r}
+#| label: tbl-raw-data-types
+#| tbl-cap: 'Variables, their types and number of missing records in the raw dataset.'
+#| cap-location: bottom
+#| layout-ncol: 2
+
+df_tbl <- data.frame(
+  name = names(churn_raw),
+  type = sapply(churn_raw, class),
+  NAs = sapply(churn_raw, function(var) sum(is.na(var)))
+)
+
+n <- ceiling(nrow(df_tbl) / 2)
+df1 <- df_tbl[1:n, ]
+df2 <- df_tbl[(n + 1):nrow(df_tbl), ]
+
+create_simple_table(df1, c('Variable', 'Type', 'NAs'))
+create_simple_table(df2, c('Variable', 'Type', 'NAs'))
+```
+
+In total, the dataset contains `r sum(is.na(churn_raw))` missing values, all of them in the `TotalCharges` variable. How these records were handled is described in @sec-cleaning.
+
+# Data Cleaning and Preparation {#sec-cleaning}
