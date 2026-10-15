@@ -9,3 +9,6 @@
 *_cache/
 *_files/
 churn_data_analysis/*.html
+
+# macOS
+.DS_Store

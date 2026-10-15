@@ -4,24 +4,25 @@ A twin analysis of the "Titanic Data Analysis" report (folder `wzorzec/`, outsid
 carried out on the Telco Customer Churn dataset. Everything is in English: report text (Quarto),
 code, variable names, comments and these notes.
 
-## Way of working
-- I write the code myself, step by step; each step: explanation → my code → review and fixes.
+## Conventions
 - Every decision in the code gets a comment (what and why) — these become the report text.
-- Commits are mine only (no co-author trailers).
 
 ## Required environment
 R (≥ 4.5), RStudio (with bundled Quarto), packages:
 `tidyverse here DataExplorer rcompanion corrplot caret cluster mclust pROC car ranger kernlab scales patchwork ggrepel factoextra viridis plotly RColorBrewer plot3D rpart.plot knitr kableExtra rmarkdown`
+
+On macOS `plot3D` requires XQuartz (www.xquartz.org). Until it is installed, `library(plot3D)`
+in the report setup chunk is commented out — restore it before step 5.
 
 ## Plan
 - [x] 0. Setup: RStudio project, folder structure, git
 - [x] 1. Import and data overview (`R/01_import.R`)
 - [x] 2. Cleaning (`R/02_cleaning.R`)
 - [x] 3. Feature engineering (`R/03_features.R`)
-- [ ] 3.5. First report sections in `churn_data_analysis/churn_data_analysis.qmd`
+- [x] 3.5. First report sections in `churn_data_analysis/churn_data_analysis.qmd`
   - [x] A. YAML header, setup chunk, first render
   - [x] B. Data Overview (raw variables table, `create_simple_table()` in `R/plots_tables.R`)
-  - [ ] C. Introduction; Data Cleaning and Preparation (missing values, transformations, new features, clean variables table)
+  - [x] C. Introduction; Data Cleaning and Preparation (missing values, transformations, new features, clean variables table)
 - [ ] 4. EDA (`R/04_eda.R`, `R/functions.R`, `R/plots_tables.R`): distributions, correlations (Spearman/Pearson, Cramér's V), variables vs churn, multivariate analysis
 - [ ] 5. Dimensionality reduction: PCA, MDS (Gower) — with 7032 rows consider a random sample
 - [ ] 6. Modeling (`R/modeling/`): 80/20 split, PAM, AGNES, logistic regression, k-NN, decision tree, Random Forest, SVM

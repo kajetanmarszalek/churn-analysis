@@ -45,7 +45,7 @@ library(viridis)
 library(plotly)
 library(purrr)
 library(RColorBrewer)
-library(plot3D)
+# library(plot3D)  # TEMP: needs XQuartz on this laptop, restore before step 5
 library(rpart.plot)
 
 # Tables
@@ -64,7 +64,13 @@ source(here("R", "03_features.R"))
 
 # Introduction
 
-The raw dataset contains `r nrow(churn_raw)` records and `r ncol(churn_raw)` variables.
+Customer churn — the loss of customers who stop using a company's services — is one of the key problems in the telecommunications industry. Acquiring a new customer is typically considerably more expensive than retaining an existing one, so understanding which customers are likely to leave, and why, is of great practical value. In this report, we use the Telco Customer Churn dataset, a sample dataset provided by IBM and obtained from [Kaggle — Telco Customer Churn](https://www.kaggle.com/datasets/blastchar/telco-customer-churn). It contains information about customers of a fictional telecommunications company, including demographic variables, the services each customer has signed up for, account information (contract type, payment method, charges), and whether the customer left within the last month.
+
+These characteristics provide an opportunity to examine how different customer characteristics are associated with the decision to leave. The aim of this report is to explore the structure of the dataset and to identify the patterns that may help explain and predict customer churn.
+
+The analysis begins with a general overview of the data, including its structure, variable types, and missing values, followed by the necessary data preparation. We then conduct an exploratory data analysis to examine the distributions of individual variables and explore relationships between them, with particular attention to their association with churn.
+
+To further investigate the underlying structure of the data, Principal Component Analysis (PCA) and Multidimensional Scaling (MDS) are applied. Finally, clustering methods (PAM and AGNES) and supervised learning models (logistic regression, $k$-nearest neighbours, decision tree, random forest, and support vector machine) are used to group customers and predict churn, and the models are evaluated on a held-out test set.
 
 # Data Overview
 
@@ -93,3 +99,66 @@ create_simple_table(df2, c('Variable', 'Type', 'NAs'))
 In total, the dataset contains `r sum(is.na(churn_raw))` missing values, all of them in the `TotalCharges` variable. How these records were handled is described in @sec-cleaning.
 
 # Data Cleaning and Preparation {#sec-cleaning}
+
+## Missing Values and Irregular Entries {#sec-irr-values}
+
+The first step of the data preparation process was to inspect the raw dataset for missing values, inconsistent encodings, and other potential issues that could affect subsequent analyses. The following key issues were identified and addressed:
+
+-   `TotalCharges`: All `r sum(is.na(churn_raw$TotalCharges))` missing values belong to customers with `tenure` $= 0$, all of whom have `Churn` $=$ `No`. These are new customers who have not yet been billed and have not yet had a chance to leave — their `No` does not reflect loyalty. Such observations are censored, so they were removed rather than imputed (see @sec-removed).
+
+-   `SeniorCitizen`: Unlike the other binary variables (`Partner`, `Dependents`, `PhoneService`, ...), which use `No`/`Yes`, this variable is stored as an integer `0`/`1`. This is why it is counted among the quantitative variables in @tbl-raw-data-types. It was recoded to `No`/`Yes` for consistency; otherwise it would be treated as a quantitative variable in the EDA (e.g., in boxplots or Pearson correlation).
+
+-   `OnlineSecurity`, `OnlineBackup`, `DeviceProtection`, `TechSupport`, `StreamingTV`, `StreamingMovies`: Besides `No` and `Yes`, these variables contain the level `No internet service`. Likewise, `MultipleLines` contains `No phone service`. These levels are structural rather than missing data — a customer without internet cannot have, e.g., online security. The same information is already stored in `InternetService` (and `PhoneService` for `MultipleLines`), so keeping a separate level would duplicate it across 7 columns, leading to perfect associations in Cramér's V and collinearity in models. These levels were therefore merged into `No`.
+
+## Removed Records and Variables {#sec-removed}
+
+-   `customerID` was removed, as it is a unique identifier that carries no information about customer behaviour.
+
+-   `r nrow(churn_raw) - nrow(churn_clean)` customers with `tenure` $= 0$ were removed (see @sec-irr-values).
+
+-   After removing `customerID`, the dataset contains `r sum(duplicated(churn_clean))` duplicated rows. Since `customerID` was unique, these are different customers with identical profiles — with few, mostly categorical variables, identical combinations are plausible (all of them have `tenure` $= 1$). They were kept as valid, independent observations.
+
+## Data Preparation
+
+After addressing the irregular entries, the dataset was further prepared for analysis. The following changes were made:
+
+-   Column names were standardized to `snake_case` notation (e.g., `SeniorCitizen` became `senior_citizen`, `MonthlyCharges` became `monthly_charges`). The original names mixed styles (CamelCase and lowercase), so they were unified following the tidyverse style guide.
+
+-   All categorical variables (binary and nominal) were converted to factors. Numeric variables (`tenure`, `monthly_charges`, `total_charges`) were left unchanged.
+
+-   Factor levels were ordered explicitly where the default alphabetical order was not meaningful:
+    -   `contract`: treated as an ordinal variable with increasing commitment: `Month-to-month` $<$ `One year` $<$ `Two year`.
+    -   `churn`: levels `No`, `Yes`, so that `Yes` is treated as the positive class in modeling.
+
+## Data Transformation
+
+Additional features were created from the existing variables to capture information that may be useful for the subsequent analysis:
+
+-   `tenure_group`: A factor with 4 levels following contract lengths (1 and 2 years). The first year is kept separate as the period of highest churn risk; later groups are wider because customer behaviour changes more slowly:
+    -   `0-12`: if `tenure` $\le 12$
+    -   `13-24`: if $13 \le$ `tenure` $\le 24$
+    -   `25-48`: if $25 \le$ `tenure` $\le 48$
+    -   `49-72`: if `tenure` $> 48$
+-   `n_services`: The number of services the customer uses ($0$–$8$), counted across `phone_service`, `multiple_lines`, `online_security`, `online_backup`, `device_protection`, `tech_support`, `streaming_tv` and `streaming_movies`. More services may mean a stronger tie to the provider.
+-   `auto_payment`: A factor indicating automatic payment (`Bank transfer (automatic)` or `Credit card (automatic)`), in which case the customer does not have to actively pay each month.
+-   `avg_monthly_charge`: The average historical monthly charge, defined as `total_charges / tenure`. If it is clearly lower than the current `monthly_charges`, the price has gone up over time.
+
+Following this process, the cleaned dataset contains `r nrow(churn_clean)` records and `r ncol(churn_clean)` variables — `r sum(sapply(churn_clean, is.numeric))` quantitative and `r sum(sapply(churn_clean, is.factor))` qualitative. The number of missing values is `r sum(is.na(churn_clean))`. Detailed information is provided in @tbl-clean-data-types.
+
+```{r}
+#| label: tbl-clean-data-types
+#| tbl-cap: 'Variables, their types and number of missing records in the dataset after data cleaning.'
+#| cap-location: bottom
+
+df_tbl <- data.frame(
+  name = names(churn_clean),
+  NAs = sapply(churn_clean, function(var) sum(is.na(var))),
+  type = sapply(churn_clean, class),
+  levels = sapply(churn_clean, function(var) {
+    if (is.factor(var)) paste0(levels(var), collapse = ', ')
+    else ''
+  })
+)
+
+create_simple_table(df_tbl, c('Variable', 'NAs', 'Type', 'Levels'))
+```
