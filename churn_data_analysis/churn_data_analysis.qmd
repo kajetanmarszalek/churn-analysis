@@ -55,11 +55,13 @@ library(kableExtra)
 # File management
 library(here)
 
+source(here("R", "functions.R"))
 source(here("R", "plots_tables.R"))
 
 source(here("R", "01_import.R"))
 source(here("R", "02_cleaning.R"))
 source(here("R", "03_features.R"))
+source(here("R", "04_eda.R"))
 ```
 
 # Introduction

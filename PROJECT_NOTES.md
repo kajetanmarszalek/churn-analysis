@@ -24,6 +24,15 @@ in the report setup chunk is commented out — restore it before step 5.
   - [x] B. Data Overview (raw variables table, `create_simple_table()` in `R/plots_tables.R`)
   - [x] C. Introduction; Data Cleaning and Preparation (missing values, transformations, new features, clean variables table)
 - [ ] 4. EDA (`R/04_eda.R`, `R/functions.R`, `R/plots_tables.R`): distributions, correlations (Spearman/Pearson, Cramér's V), variables vs churn, multivariate analysis
+  - [ ] A. Foundations and quantitative variables
+    - [x] `R/04_eda.R`: split into `quant_vars`/`data_quant` and `qual_vars`/`data_qual`
+    - [x] `R/functions.R`: plot labels and `get_label()`
+    - [ ] `R/plots_tables.R`: `draw_distribution_boxplot()`, `draw_distribution_density()`; report section "Distributions of Quantitative Variables" (summary table, boxplots, densities)
+  - [ ] B. Qualitative variables (barplots, grouped: demographics / services / account)
+  - [ ] C. Correlations (Spearman/Pearson; Cramér's V with `calc_cramer_matrix()`)
+  - [ ] D. Variables vs churn (proportion barplots, densities by churn; churn = Yes in red)
+  - [ ] E. Multivariate analysis (contract × tenure_group, monthly_charges by internet_service, n_services confounding, monthly_charges − avg_monthly_charge)
+  - [ ] F. EDA summary
 - [ ] 5. Dimensionality reduction: PCA, MDS (Gower) — with 7032 rows consider a random sample
 - [ ] 6. Modeling (`R/modeling/`): 80/20 split, PAM, AGNES, logistic regression, k-NN, decision tree, Random Forest, SVM
 - [ ] 7. Test-set evaluation, conclusions
